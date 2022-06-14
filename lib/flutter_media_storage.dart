@@ -209,14 +209,27 @@ class _LoadedMediaStorage {
     return await writeStore();
   }
 
-  Future<File?> removeFromStoreIfPresent(String url) async {
+  /// Deletes all [_MediaData] objects from the store and
+  /// returns their filenames as a list to delete them
+  /// later on.
+  ///
+  ///! Important: Don't call this after adding a new entry.
+  ///!            All new entries are to be added after this
+  ///!            has completed so they don't get deleted.
+  List<String> removeFromStoreIfPresent(String url) {
     final data = _store.where((e) => e.url == url).toList();
+    final filenames = <String>[];
     if (data.isNotEmpty) {
       //? At least one entry with the url found.
-      data.forEach((e) => _store.remove(e));
+      // ignore: avoid_function_literals_in_foreach_calls
+      data.forEach((e) {
+        filenames.add(e.filename);
+        _store.remove(e);
+      });
+      return filenames;
     }
     //? No such entry found.
-    return null;
+    return <String>[];
   }
 
   /// Converts all loaded [_MediaData] inside [_store] to json objects
@@ -317,6 +330,7 @@ class MediaStorage {
   /// json-esque Map.
   List<Map> listLoaded() {
     final list = <Map>[];
+    // ignore: avoid_function_literals_in_foreach_calls
     _listStorage._store.forEach((e) => list.add(e.toJson()));
     return list;
   }
@@ -352,9 +366,11 @@ class MediaStorage {
       lastUpdate: DateTime.now(),
     );
     //? Removing the previous entries with this url.
-    await _listStorage.removeFromStoreIfPresent(url);
+    final filesToDelete = _listStorage.removeFromStoreIfPresent(url);
     //? Removing the prevously downloaded file of this url.
-    await _entryStorage.deleteMediaFromDiscIfPresent(filename);
+    for (var name in filesToDelete) {
+      await _entryStorage.deleteMediaFromDiscIfPresent(name);
+    }
     // Serializes everything after updating.
     await _listStorage.addToStore(newEntry);
     print('Downloaded data, wrote it to storage and updated everything.');
