@@ -47,6 +47,61 @@ yourself.
 
 ### Usage
 
+To use this library all you need is an instance of `MediaStorage`:
+
+```dart
+import 'package:flutter_media_storage/flutter_media_storage.dart';
+
+// ...
+
+// Step 1: Create an instance.
+final storage = MediaStorage();
+```
+
+To assure correctness you should first load all the stored files from the device
+before using the storage. This is done by calling `init()` which returns a Future:
+
+```dart
+// Step 2: Call init() to load all potentially existing files on the device.
+await storage.init();
+```
+
+Now `storage` can be used to get data from urls:
+
+```dart
+// Example url for an image.
+final url = 'https://www.kindacode.com/wp-content/uploads/2022/02/orange.jpeg';
+
+//? Getting the file. If it is not loaded on the device it will be called
+//? <current_datetime>.dat and will be classified as binary file. If it is
+//? already downloaded this will return the correct file as is from storage.
+final File? = await storage.getDataAsFile(url);
+
+//? Same call as above, but in case of a download the file will be called
+//? orange.jpg and will be categorized as image file.
+final File? = await storage.getDataAsFile(
+  url,
+  filename: 'orange.jpg',
+);
+
+//? Same call as the previous two, but this will always force a new download.
+//? The old entry will be deleted.
+final File? = await storage.getDataAsFile(
+  url,
+  filename: 'orange.jpg',
+  isUpdate: true,
+);
+
+//? The three calls above also be done using `getDataAsBinary()` using the same
+//? args. But that will return a List<int>?.
+
+//? Getting a list of all loaded medias' data.
+final data = storage.listLoaded();
+for (Map map in data) {
+  print('${map['url']} locally stored. Was last updated on ${DateTiime.parse(map['last_update'])}');
+}
+```
+
 ---
 
 <h2 id="how-it-works">🔍 How it works</h2>

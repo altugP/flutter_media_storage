@@ -137,6 +137,16 @@ class _MediaFileStorage {
     }
   }
 
+  /// Deletes the file named [filename] (in its correct path) if it exists.
+  Future<void> deleteMediaFromDiscIfPresent(String filename) async {
+    try {
+      final file = await _getLocalFile(filename);
+      file.delete();
+    } catch (e) {
+      return;
+    }
+  }
+
   /// Reads media from given file as byte array and returns those
   /// bytes as [List<int>]. This is usable for almost every byte
   /// operation from other libraries that use [List<Uint8>].
@@ -343,8 +353,10 @@ class MediaStorage {
     );
     //? Removing the previous entries with this url.
     await _listStorage.removeFromStoreIfPresent(url);
-    await _listStorage
-        .addToStore(newEntry); // Serializes everything after updating.
+    //? Removing the prevously downloaded file of this url.
+    await _entryStorage.deleteMediaFromDiscIfPresent(filename);
+    // Serializes everything after updating.
+    await _listStorage.addToStore(newEntry);
     print('Downloaded data, wrote it to storage and updated everything.');
     return await read(filename);
   }
