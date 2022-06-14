@@ -27,7 +27,7 @@ existing `pubspec.yaml` as:
 dependencies:
   flutter_media_storage:
     git:
-      url: git://github.com/altugP/flutter_media_storage.git
+      url: https://github.com/altugP/flutter_media_storage.git
 ```
 
 After adding the git dependency you install it by running `flutter pug get` as
